@@ -12,7 +12,6 @@ def main():
     # Hide the default -h option
     parser.add_argument("--no-help", action="store_true", help=argparse.SUPPRESS)
     parser.add_argument("-v", action="store_true", help="Check current PHP version")
-    parser.add_argument("list", type=str, help="List PHP versions can be used")
 
     # Create a subparser for the 'use' command
     subparsers = parser.add_subparsers(dest="command")
@@ -26,9 +25,6 @@ def main():
     if args.v:
         check_php_version()
     elif args.command == "use":
-        use_php_version(args.version)
-        check_php_version()
-    elif args.list:
         use_php_version(args.version)
         check_php_version()
     else:
@@ -77,15 +73,15 @@ def end_task(process_path):
 
 
 def use_php_version(version):
-    unAliasedVersion = ""
+    unaliased_version = ""
     if version == "8":
-        unAliasedVersion = "8.2.4"
+        unaliased_version = "8.2.4"
     elif version == "7.4" or version == "7-4" or version == "74":
-        unAliasedVersion = "7.4.33"
+        unaliased_version = "7.4.33"
     elif version == "7.3" or version == "7-3" or version == "73":
-        unAliasedVersion = "7.3.33"
+        unaliased_version = "7.3.33"
     elif version == "5":
-        unAliasedVersion = "5.3.8"
+        unaliased_version = "5.3.8"
     else:
         print(f"We can't find the version that you looking for")
         print(f"\nAvaiable versions : ")
@@ -96,29 +92,39 @@ def use_php_version(version):
         print("")
         return None
 
+    # Get the current PHP version
+    current_php_version = check_php_version_and_get_current()
+
+    if unaliased_version == current_php_version:
+        print(f"you are now using php {unaliased_version}")
+
     # End tasks for Apache, MySQL, and PostgreSQL
     end_task("C:/xampp/apache/bin/httpd.exe")
     end_task("C:/Program Files/PostgreSQL/15/bin/postgres.exe")
     end_task("C:/xampp/mysql/bin/mysqld.exe")
     end_task("C:/Program Files/PostgreSQL/15/bin/pg_ctl.exe")
 
-    # Get the current PHP version
-    current_php_version = check_php_version_and_get_current()
-
     # Rename folder C:\xampp to C:\xampp-<current_version>
     xampp_path = "C:/xampp"
     if os.path.exists(xampp_path):
-        new_xampp_path = f"{xampp_path}-{current_php_version}"
-        os.rename(xampp_path, new_xampp_path)
-        print(f"Renamed {xampp_path} to {new_xampp_path}")
+        try:
+            new_xampp_path = f"{xampp_path}-{current_php_version}"
+            os.rename(xampp_path, new_xampp_path)
+            print(f"Renamed {xampp_path} to {new_xampp_path}")
+        except Exception as e:
+            print(f"Failed to rename folder, {e}")
 
         # Rename folder C:\xampp-<version> to C:\xampp
-        old_xampp_version_path = f"{xampp_path}-{unAliasedVersion}"
+        old_xampp_version_path = f"{xampp_path}-{unaliased_version}"
         if os.path.exists(old_xampp_version_path):
-            os.rename(old_xampp_version_path, xampp_path)
-            print(
-                f"Switched to PHP version {unAliasedVersion}. Renamed {old_xampp_version_path} to {xampp_path}"
-            )
+            try:
+                os.rename(old_xampp_version_path, xampp_path)
+                print(
+                    f"Switched to PHP version {unaliased_version}. Renamed {old_xampp_version_path} to {xampp_path}"
+                )
+            except Exception as e:
+                print(f"Failed to rename folder, {e}")
+                os.rename(new_xampp_path, xampp_path)
         else:
             print(f"Version folder {old_xampp_version_path} does not exist.")
     else:
