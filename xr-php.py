@@ -99,6 +99,7 @@ def use_php_version(version):
         print(f"you are now using php {unaliased_version}")
 
     # End tasks for Apache, MySQL, and PostgreSQL
+    end_task("C:/xampp/xampp-control.exe")
     end_task("C:/xampp/apache/bin/httpd.exe")
     end_task("C:/Program Files/PostgreSQL/15/bin/postgres.exe")
     end_task("C:/xampp/mysql/bin/mysqld.exe")
