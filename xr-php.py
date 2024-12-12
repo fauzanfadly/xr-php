@@ -104,6 +104,7 @@ def use_php_version(version):
     end_task("C:/Program Files/PostgreSQL/15/bin/postgres.exe")
     end_task("C:/xampp/mysql/bin/mysqld.exe")
     end_task("C:/Program Files/PostgreSQL/15/bin/pg_ctl.exe")
+    end_task("C:/xampp/FileZillaFTP/FileZillaServer.exe")
 
     # Rename folder C:\xampp to C:\xampp-<current_version>
     xampp_path = "C:/xampp"
