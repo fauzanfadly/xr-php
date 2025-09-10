@@ -98,17 +98,16 @@ def use_php_version(version):
     if unaliased_version == current_php_version:
         print(f"you are now using php {unaliased_version}")
 
-    # End tasks for Apache, MySQL, and PostgreSQL
-    end_task("C:/xampp/xampp-control.exe")
-    end_task("C:/xampp/apache/bin/httpd.exe")
-    end_task("C:/Program Files/PostgreSQL/15/bin/postgres.exe")
-    end_task("C:/xampp/mysql/bin/mysqld.exe")
-    end_task("C:/Program Files/PostgreSQL/15/bin/pg_ctl.exe")
-    end_task("C:/xampp/FileZillaFTP/FileZillaServer.exe")
-
     # Rename folder C:\xampp to C:\xampp-<current_version>
     xampp_path = "C:/xampp"
     if os.path.exists(xampp_path):
+        # End tasks for Apache, MySQL, PostgreSQL, Fork, and FileZilla
+        end_task("C:/xampp/xampp-control.exe")
+        end_task("C:/xampp/apache/bin/httpd.exe")
+        end_task("C:/xampp/mysql/bin/mysqld.exe")
+        end_task("C:/xampp/FileZillaFTP/FileZillaServer.exe")
+        end_task("C:/Users/fadly/AppData/Local/Fork/current/Fork.exe")
+
         try:
             new_xampp_path = f"{xampp_path}-{current_php_version}"
             os.rename(xampp_path, new_xampp_path)
@@ -129,6 +128,10 @@ def use_php_version(version):
                 os.rename(new_xampp_path, xampp_path)
         else:
             print(f"Version folder {old_xampp_version_path} does not exist.")
+
+        # Start tasks for Apache, MySQL, PostgreSQL, Fork, and FileZilla
+        subprocess.Popen(["C:/xampp/xampp-control.exe"])
+        subprocess.Popen(["C:/Users/fadly/AppData/Local/Fork/current/Fork.exe"])
     else:
         print(f"XAMPP directory does not exist at {xampp_path}.")
 
