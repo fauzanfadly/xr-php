@@ -65,11 +65,18 @@ def extract_php_version(output):
 def end_task(process_path):
     """End a task by its executable path."""
     try:
-        taskkill_command = f"taskkill /F /IM {os.path.basename(process_path)}"
-        subprocess.run(taskkill_command, shell=True, capture_output=True, text=True)
-        print(f"Ended task: {os.path.basename(process_path)}")
+        process_name = os.path.basename(process_path)
+        taskkill_command = f"taskkill /F /IM {process_name}"
+        result = subprocess.run(taskkill_command, shell=True, capture_output=True, text=True)
+        
+        # Only print if the process was actually killed (not if it wasn't running)
+        if result.returncode == 0:
+            print(f"Stopped: {process_name}")
+        # Don't print error if process wasn't running (common case)
+        
     except Exception as e:
-        print(f"Error ending task {process_path}: {e}")
+        # Only print if there's an actual error, not if process wasn't running
+        pass
 
 
 def use_php_version(version):
@@ -96,44 +103,75 @@ def use_php_version(version):
     current_php_version = check_php_version_and_get_current()
 
     if unaliased_version == current_php_version:
-        print(f"you are now using php {unaliased_version}")
+        print(f"You are already using PHP {unaliased_version}")
+        return
 
     # Rename folder C:\xampp to C:\xampp-<current_version>
     xampp_path = "C:/xampp"
-    if os.path.exists(xampp_path):
-        # End tasks for Apache, MySQL, PostgreSQL, Fork, and FileZilla
-        end_task("C:/xampp/xampp-control.exe")
-        end_task("C:/xampp/apache/bin/httpd.exe")
-        end_task("C:/xampp/mysql/bin/mysqld.exe")
-        end_task("C:/xampp/FileZillaFTP/FileZillaServer.exe")
-        end_task("C:/Users/fadly/AppData/Local/Fork/current/Fork.exe")
+    if not os.path.exists(xampp_path):
+        print(f"XAMPP directory does not exist at {xampp_path}.")
+        return
 
+    # End tasks for Apache, MySQL, PostgreSQL, Fork, and FileZilla
+    print("Stopping XAMPP services...")
+    end_task("C:/xampp/xampp-control.exe")
+    end_task("C:/xampp/apache/bin/httpd.exe")
+    end_task("C:/xampp/mysql/bin/mysqld.exe")
+    end_task("C:/xampp/FileZillaFTP/FileZillaServer.exe")
+    end_task("C:/Users/fadly/AppData/Local/Fork/current/Fork.exe")
+
+    # Wait a bit for processes to fully terminate
+    import time
+    time.sleep(2)
+
+    new_xampp_path = f"{xampp_path}-{current_php_version}"
+    old_xampp_version_path = f"{xampp_path}-{unaliased_version}"
+
+    # Check if target version folder exists
+    if not os.path.exists(old_xampp_version_path):
+        print(f"Version folder {old_xampp_version_path} does not exist.")
+        return
+
+    # Check if backup folder already exists and remove it if necessary
+    if os.path.exists(new_xampp_path):
+        print(f"Backup folder {new_xampp_path} already exists, removing it...")
         try:
-            new_xampp_path = f"{xampp_path}-{current_php_version}"
-            os.rename(xampp_path, new_xampp_path)
-            print(f"Renamed {xampp_path} to {new_xampp_path}")
+            import shutil
+            shutil.rmtree(new_xampp_path)
         except Exception as e:
-            print(f"Failed to rename folder, {e}")
+            print(f"Failed to remove existing backup folder: {e}")
+            return
 
-        # Rename folder C:\xampp-<version> to C:\xampp
-        old_xampp_version_path = f"{xampp_path}-{unaliased_version}"
-        if os.path.exists(old_xampp_version_path):
-            try:
-                os.rename(old_xampp_version_path, xampp_path)
-                print(
-                    f"Switched to PHP version {unaliased_version}. Renamed {old_xampp_version_path} to {xampp_path}"
-                )
-            except Exception as e:
-                print(f"Failed to rename folder, {e}")
-                os.rename(new_xampp_path, xampp_path)
-        else:
-            print(f"Version folder {old_xampp_version_path} does not exist.")
+    # Step 1: Rename current xampp to backup
+    try:
+        os.rename(xampp_path, new_xampp_path)
+        print(f"Backed up current XAMPP: {xampp_path} -> {new_xampp_path}")
+    except Exception as e:
+        print(f"Failed to backup current XAMPP folder: {e}")
+        return
 
-        # Start tasks for Apache, MySQL, PostgreSQL, Fork, and FileZilla
+    # Step 2: Rename target version to xampp
+    try:
+        os.rename(old_xampp_version_path, xampp_path)
+        print(f"Switched to PHP version {unaliased_version}: {old_xampp_version_path} -> {xampp_path}")
+    except Exception as e:
+        print(f"Failed to switch to new version: {e}")
+        # Rollback: restore original xampp folder
+        try:
+            os.rename(new_xampp_path, xampp_path)
+            print("Rollback successful: restored original XAMPP folder")
+        except Exception as rollback_error:
+            print(f"CRITICAL: Rollback failed! {rollback_error}")
+            print("Please manually rename folders to restore XAMPP")
+        return
+
+    # Start tasks for Apache, MySQL, PostgreSQL, Fork, and FileZilla
+    print("Starting XAMPP control panel...")
+    try:
         subprocess.Popen(["C:/xampp/xampp-control.exe"])
         subprocess.Popen(["C:/Users/fadly/AppData/Local/Fork/current/Fork.exe"])
-    else:
-        print(f"XAMPP directory does not exist at {xampp_path}.")
+    except Exception as e:
+        print(f"Failed to start applications: {e}")
 
 
 def check_php_version_and_get_current():
