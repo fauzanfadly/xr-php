@@ -119,6 +119,7 @@ def use_php_version(version):
     end_task("C:/xampp/mysql/bin/mysqld.exe")
     end_task("C:/xampp/FileZillaFTP/FileZillaServer.exe")
     end_task("C:/Users/fadly/AppData/Local/Fork/current/Fork.exe")
+    end_task("C:/Users/fadly/AppData/Local/Programs/Microsoft VS Code/Code.exe")
 
     # Wait a bit for processes to fully terminate
     import time
